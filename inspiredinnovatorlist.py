@@ -8,8 +8,14 @@ import os
 # =========================
 url = "https://insp.social/xrpc/app.bsky.feed.getFeed?feed=at://did:plc:cadeggccwqtp3yjkk7auhpil/app.bsky.feed.generator/innovator&limit=50"
 
+token = os.getenv("INSPIRED_TOKEN")
+
+if not token:
+    print("❌ TOKEN NOT FOUND")
+    exit()
+
 headers = {
-    "Authorization": f"Bearer {os.getenv('INSPIRED_TOKEN')}"
+    "Authorization": f"Bearer {token}"
 }
 
 file_path = "inspired_data.xlsx"
@@ -24,9 +30,14 @@ while True:
     full_url = url + (f"&cursor={cursor}" if cursor else "")
 
     res = requests.get(full_url, headers=headers)
-    data = res.json()
 
+    if res.status_code != 200:
+        print(f"❌ API ERROR: {res.status_code}")
+        break
+
+    data = res.json()
     feed = data.get("feed", [])
+
     if not feed:
         break
 
@@ -35,17 +46,18 @@ while True:
         author = post.get("author", {})
 
         handle = author.get("handle", "")
+        safe_handle = handle.split('.')[0] if handle and '.' in handle else handle
 
         all_rows.append({
             "Name": author.get("displayName"),
             "Handle": handle,
-            "Profile": f"https://app.inspired.ch/profile/{handle.split('.')[0]}" if handle else "",
+            "Profile": f"https://app.inspired.ch/profile/{safe_handle}" if handle else "",
             "Country": author.get("country"),
             "Sector ID": author.get("sectorId"),
             "Stage ID": author.get("stageId"),
             "User Type": author.get("userType"),
-            "Description": post.get("record", {}).get("text"),
-            "Likes": post.get("likeCount"),
+            "Description": post.get("record", {}).get("text") or "",
+            "Likes": post.get("likeCount") or 0,
         })
 
     cursor = data.get("cursor")
@@ -54,7 +66,7 @@ while True:
 
     time.sleep(1)
 
-print(f"Total data: {len(all_rows)}")
+print(f"✅ Total data: {len(all_rows)}")
 
 # =========================
 # SAVE TO EXCEL
@@ -94,7 +106,7 @@ for row in ws.iter_rows(min_row=2):
         cell.alignment = Alignment(wrap_text=True, vertical="top")
 
 # =========================
-# COLUMN WIDTH (CONTROLLED)
+# COLUMN WIDTH (FOCUSED)
 # =========================
 column_widths = {
     "Name": 28,
@@ -112,13 +124,10 @@ for idx, cell in enumerate(ws[1], start=1):
     col_name = cell.value
     col_letter = get_column_letter(idx)
 
-    if col_name in column_widths:
-        ws.column_dimensions[col_letter].width = column_widths[col_name]
-    else:
-        ws.column_dimensions[col_letter].width = 15
+    ws.column_dimensions[col_letter].width = column_widths.get(col_name, 15)
 
 # =========================
-# LIMIT ROW HEIGHT (ANTI GEMUK)
+# LIMIT ROW HEIGHT
 # =========================
 for row in ws.iter_rows(min_row=2):
     ws.row_dimensions[row[0].row].height = 60
@@ -139,7 +148,7 @@ for i, row in enumerate(ws.iter_rows(min_row=2), start=2):
             cell.fill = stripe_fill
 
 # =========================
-# SECTOR COLOR (OPTIONAL)
+# SECTOR COLOR
 # =========================
 sector_colors = {
     "climate": "DCFCE7",
@@ -168,4 +177,4 @@ if sector_col_index:
 # =========================
 wb.save(file_path)
 
-print("🔥 DONE — LEAN DEALFLOW READY")
+print("🔥 DONE — DEALFLOW MACHINE ACTIVE")
