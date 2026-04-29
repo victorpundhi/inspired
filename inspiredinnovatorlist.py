@@ -91,6 +91,21 @@ while True:
 
 print(f"✅ Total data: {len(all_rows)}")
 
+if len(all_rows) == 0:
+    print("⚠️ API lagi error, isi dummy data biar tetep jalan")
+
+    all_rows.append({
+        "Name": "API DOWN",
+        "Handle": "-",
+        "Profile": "-",
+        "Country": "-",
+        "Sector ID": "ERROR",
+        "Stage ID": "-",
+        "User Type": "-",
+        "Description": "API failed (500), retry next run",
+        "Likes": 0,
+    })
+
 # =========================
 # SAVE TO EXCEL (ALWAYS)
 # =========================
