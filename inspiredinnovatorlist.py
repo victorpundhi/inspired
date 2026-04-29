@@ -9,7 +9,7 @@ from datetime import datetime
 # =========================
 url = "https://insp.social/xrpc/app.bsky.feed.getFeed?feed=at://did:plc:cadeggccwqtp3yjkk7auhpil/app.bsky.feed.generator/innovator&limit=50"
 
-token = os.getenv("INSPIRED_TOKEN")
+token = os.getenv("INSPIRED_TOKEN", "").strip()
 
 if not token:
     print("❌ TOKEN NOT FOUND")
