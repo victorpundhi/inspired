@@ -32,5 +32,5 @@ jobs:
       - name: Commit & Push result
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "🤖 auto update data"
-          file_pattern: inspired_data.xlsx
+          commit_message: "update data"
+          file_pattern: "*.xlsx"
