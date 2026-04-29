@@ -21,8 +21,14 @@ jobs:
         with:
           python-version: '3.10'
 
+      - name: Check Python version
+        run: python --version
+
       - name: Install dependencies
         run: pip install requests pandas openpyxl
+
+      - name: Wait before run (stability)
+        run: sleep 10
 
       - name: Run scraper
         env:
@@ -33,4 +39,4 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "update data"
-          file_pattern: "*.xlsx"
+          file_pattern: "*.xlsx last_success.json"
