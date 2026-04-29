@@ -25,6 +25,8 @@ jobs:
         run: pip install requests pandas openpyxl
 
       - name: Run scraper
+        env:
+          INSPIRED_TOKEN: ${{ secrets.INSPIRED_TOKEN }}
         run: python inspiredinnovatorlist.py
 
       - name: Commit & Push result
