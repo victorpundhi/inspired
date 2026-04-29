@@ -9,9 +9,8 @@ from datetime import datetime
 # =========================
 url = "https://insp.social/xrpc/app.bsky.feed.getFeed?feed=at://did:plc:cadeggccwqtp3yjkk7auhpil/app.bsky.feed.generator/innovator&limit=50"
 
-# 🔥 AMBIL TOKEN + BERSIHKAN (ANTI ERROR HEADER)
+# 🔥 TOKEN (ANTI NEWLINE CHAOS)
 raw_token = os.getenv("INSPIRED_TOKEN", "")
-
 token = raw_token.replace("\n", "").replace("\r", "").strip()
 
 if not token:
@@ -24,24 +23,39 @@ headers = {
     "Authorization": f"Bearer {token}"
 }
 
-# 🔥 BIAR PASTI KE-COMMIT (SELALU BERUBAH)
+# 🔥 TIMESTAMP (BIAR SELALU KE-COMMIT)
 timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
 file_path = f"inspired_data_{timestamp}.xlsx"
 
 # =========================
-# FETCH DATA
+# FETCH DATA (WITH RETRY)
 # =========================
 all_rows = []
 cursor = None
 
+MAX_RETRIES = 3
+
 while True:
     full_url = url + (f"&cursor={cursor}" if cursor else "")
 
-    res = requests.get(full_url, headers=headers)
+    success = False
 
-    if res.status_code != 200:
-        print(f"❌ API ERROR: {res.status_code}")
-        print(res.text)
+    for attempt in range(MAX_RETRIES):
+        try:
+            res = requests.get(full_url, headers=headers)
+
+            if res.status_code == 200:
+                success = True
+                break
+            else:
+                print(f"⚠️ Attempt {attempt+1}: {res.status_code}")
+        except Exception as e:
+            print(f"⚠️ Attempt {attempt+1} error:", str(e))
+
+        time.sleep(2)
+
+    if not success:
+        print("❌ Failed after retries. Stop fetching.")
         break
 
     data = res.json()
@@ -77,12 +91,8 @@ while True:
 
 print(f"✅ Total data: {len(all_rows)}")
 
-if len(all_rows) == 0:
-    print("⚠️ No data fetched. Skip file creation.")
-    exit()
-
 # =========================
-# SAVE TO EXCEL
+# SAVE TO EXCEL (ALWAYS)
 # =========================
 df = pd.DataFrame(all_rows)
 df.to_excel(file_path, index=False)
@@ -114,7 +124,7 @@ for row in ws.iter_rows(min_row=2):
         cell.font = body_font
         cell.alignment = Alignment(wrap_text=True, vertical="top")
 
-# WIDTH
+# WIDTH CONTROL
 column_widths = {
     "Name": 28,
     "Description": 60,
@@ -135,10 +145,10 @@ for idx, cell in enumerate(ws[1], start=1):
 for row in ws.iter_rows(min_row=2):
     ws.row_dimensions[row[0].row].height = 60
 
-# FREEZE
+# FREEZE HEADER
 ws.freeze_panes = "A2"
 
-# ZEBRA
+# ZEBRA STRIPES
 stripe_fill = PatternFill(start_color="F9FAFB", end_color="F9FAFB", fill_type="solid")
 
 for i, row in enumerate(ws.iter_rows(min_row=2), start=2):
