@@ -2,6 +2,7 @@ import requests
 import pandas as pd
 import time
 import os
+from datetime import datetime
 
 # =========================
 # CONFIG
@@ -18,7 +19,9 @@ headers = {
     "Authorization": f"Bearer {token}"
 }
 
-file_path = "inspired_data.xlsx"
+# 🔥 timestamp biar pasti beda tiap run
+timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
+file_path = f"inspired_data_{timestamp}.xlsx"
 
 # =========================
 # FETCH DATA
@@ -68,6 +71,10 @@ while True:
 
 print(f"✅ Total data: {len(all_rows)}")
 
+# DEBUG preview
+print("Sample data:")
+print(all_rows[:2])
+
 # =========================
 # SAVE TO EXCEL
 # =========================
@@ -84,9 +91,7 @@ from openpyxl.utils import get_column_letter
 wb = load_workbook(file_path)
 ws = wb.active
 
-# =========================
 # HEADER STYLE
-# =========================
 header_fill = PatternFill(start_color="111827", end_color="111827", fill_type="solid")
 header_font = Font(color="FFFFFF", bold=True, name="Segoe UI", size=11)
 
@@ -95,9 +100,7 @@ for cell in ws[1]:
     cell.fill = header_fill
     cell.alignment = Alignment(horizontal="center", vertical="center")
 
-# =========================
 # BODY STYLE
-# =========================
 body_font = Font(name="Segoe UI", size=10)
 
 for row in ws.iter_rows(min_row=2):
@@ -105,9 +108,7 @@ for row in ws.iter_rows(min_row=2):
         cell.font = body_font
         cell.alignment = Alignment(wrap_text=True, vertical="top")
 
-# =========================
-# COLUMN WIDTH (FOCUSED)
-# =========================
+# COLUMN WIDTH
 column_widths = {
     "Name": 28,
     "Description": 60,
@@ -121,25 +122,17 @@ column_widths = {
 }
 
 for idx, cell in enumerate(ws[1], start=1):
-    col_name = cell.value
     col_letter = get_column_letter(idx)
+    ws.column_dimensions[col_letter].width = column_widths.get(cell.value, 15)
 
-    ws.column_dimensions[col_letter].width = column_widths.get(col_name, 15)
-
-# =========================
 # LIMIT ROW HEIGHT
-# =========================
 for row in ws.iter_rows(min_row=2):
     ws.row_dimensions[row[0].row].height = 60
 
-# =========================
 # FREEZE HEADER
-# =========================
 ws.freeze_panes = "A2"
 
-# =========================
 # ZEBRA STRIPES
-# =========================
 stripe_fill = PatternFill(start_color="F9FAFB", end_color="F9FAFB", fill_type="solid")
 
 for i, row in enumerate(ws.iter_rows(min_row=2), start=2):
@@ -147,9 +140,7 @@ for i, row in enumerate(ws.iter_rows(min_row=2), start=2):
         for cell in row:
             cell.fill = stripe_fill
 
-# =========================
 # SECTOR COLOR
-# =========================
 sector_colors = {
     "climate": "DCFCE7",
     "tech": "DBEAFE",
@@ -172,9 +163,7 @@ if sector_col_index:
             if key in val:
                 cell.fill = PatternFill(start_color=color, end_color=color, fill_type="solid")
 
-# =========================
 # SAVE FINAL
-# =========================
 wb.save(file_path)
 
-print("🔥 DONE — DEALFLOW MACHINE ACTIVE")
+print(f"🔥 DONE — FILE CREATED: {file_path}")
