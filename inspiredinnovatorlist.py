@@ -9,17 +9,22 @@ from datetime import datetime
 # =========================
 url = "https://insp.social/xrpc/app.bsky.feed.getFeed?feed=at://did:plc:cadeggccwqtp3yjkk7auhpil/app.bsky.feed.generator/innovator&limit=50"
 
-token = os.getenv("INSPIRED_TOKEN", "").strip()
+# 🔥 AMBIL TOKEN + BERSIHKAN (ANTI ERROR HEADER)
+raw_token = os.getenv("INSPIRED_TOKEN", "")
+
+token = raw_token.replace("\n", "").replace("\r", "").strip()
 
 if not token:
-    print("❌ TOKEN NOT FOUND")
+    print("❌ TOKEN NOT FOUND / EMPTY")
     exit()
+
+print("✅ Token loaded. Length:", len(token))
 
 headers = {
     "Authorization": f"Bearer {token}"
 }
 
-# 🔥 timestamp biar pasti beda tiap run
+# 🔥 BIAR PASTI KE-COMMIT (SELALU BERUBAH)
 timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
 file_path = f"inspired_data_{timestamp}.xlsx"
 
@@ -36,6 +41,7 @@ while True:
 
     if res.status_code != 200:
         print(f"❌ API ERROR: {res.status_code}")
+        print(res.text)
         break
 
     data = res.json()
@@ -71,9 +77,9 @@ while True:
 
 print(f"✅ Total data: {len(all_rows)}")
 
-# DEBUG preview
-print("Sample data:")
-print(all_rows[:2])
+if len(all_rows) == 0:
+    print("⚠️ No data fetched. Skip file creation.")
+    exit()
 
 # =========================
 # SAVE TO EXCEL
@@ -91,7 +97,7 @@ from openpyxl.utils import get_column_letter
 wb = load_workbook(file_path)
 ws = wb.active
 
-# HEADER STYLE
+# HEADER
 header_fill = PatternFill(start_color="111827", end_color="111827", fill_type="solid")
 header_font = Font(color="FFFFFF", bold=True, name="Segoe UI", size=11)
 
@@ -100,7 +106,7 @@ for cell in ws[1]:
     cell.fill = header_fill
     cell.alignment = Alignment(horizontal="center", vertical="center")
 
-# BODY STYLE
+# BODY
 body_font = Font(name="Segoe UI", size=10)
 
 for row in ws.iter_rows(min_row=2):
@@ -108,7 +114,7 @@ for row in ws.iter_rows(min_row=2):
         cell.font = body_font
         cell.alignment = Alignment(wrap_text=True, vertical="top")
 
-# COLUMN WIDTH
+# WIDTH
 column_widths = {
     "Name": 28,
     "Description": 60,
@@ -125,14 +131,14 @@ for idx, cell in enumerate(ws[1], start=1):
     col_letter = get_column_letter(idx)
     ws.column_dimensions[col_letter].width = column_widths.get(cell.value, 15)
 
-# LIMIT ROW HEIGHT
+# HEIGHT LIMIT
 for row in ws.iter_rows(min_row=2):
     ws.row_dimensions[row[0].row].height = 60
 
-# FREEZE HEADER
+# FREEZE
 ws.freeze_panes = "A2"
 
-# ZEBRA STRIPES
+# ZEBRA
 stripe_fill = PatternFill(start_color="F9FAFB", end_color="F9FAFB", fill_type="solid")
 
 for i, row in enumerate(ws.iter_rows(min_row=2), start=2):
