@@ -12,7 +12,7 @@ headers = {
     "Authorization": f"Bearer {os.getenv('INSPIRED_TOKEN')}"
 }
 
-file_path = "/content/drive/MyDrive/INSPIRED/inspired_data.xlsx"
+file_path = "inspired_data.xlsx"
 
 # =========================
 # FETCH DATA
