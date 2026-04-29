@@ -2,7 +2,7 @@ name: Daily Scraper
 
 on:
   schedule:
-    - cron: '0 1 * * *'  # tiap hari jam 08.00 WIB
+    - cron: '0 1 * * *'
   workflow_dispatch:
 
 env:
@@ -12,40 +12,28 @@ jobs:
   run-script:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: write   # 🔥 INI KUNCINYA
+
     steps:
-      # =========================
-      # CHECKOUT REPO
-      # =========================
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      # =========================
-      # SETUP PYTHON
-      # =========================
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
-      # =========================
-      # INSTALL DEPENDENCIES
-      # =========================
       - name: Install dependencies
         run: pip install requests pandas openpyxl
 
-      # =========================
-      # RUN SCRIPT
-      # =========================
       - name: Run scraper
         run: python inspiredinnovatorlist.py
 
-      # =========================
-      # COMMIT & PUSH RESULT
-      # =========================
       - name: Commit & Push result
         run: |
           git config --global user.name "github-actions-bot"
           git config --global user.email "bot@github.com"
           git add inspired_data.xlsx
-          git commit -m "🤖 auto update data"
+          git diff --cached --quiet || git commit -m "🤖 auto update data"
           git push
